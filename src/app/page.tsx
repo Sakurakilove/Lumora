@@ -32,7 +32,9 @@ const PNG_OVERLAY_URL =
 const DARK_COLOR = "#182C41";
 
 const systemFont = { fontFamily: "system-ui, sans-serif" } as const;
-const serifFont = { fontFamily: "'Instrument Serif', serif" } as const;
+const serifFont = {
+  fontFamily: "'Instrument Serif', 'Noto Serif SC', serif",
+} as const;
 
 export default function Home() {
   const [activeVideo, setActiveVideo] = useState(0);

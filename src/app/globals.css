@@ -122,7 +122,7 @@
 
 html,
 body {
-  font-family: "Instrument Serif", serif;
+  font-family: "Instrument Serif", "Noto Serif SC", serif;
   background-color: #000;
   margin: 0;
   padding: 0;

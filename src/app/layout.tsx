@@ -45,13 +45,13 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ fontFamily: "'Instrument Serif', serif" }}
+        style={{ fontFamily: "'Instrument Serif', 'Noto Serif SC', serif" }}
       >
         {children}
         <Toaster />
