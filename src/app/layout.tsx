@@ -38,14 +38,14 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.loli.net" />
         <link
           rel="preconnect"
-          href="https://fonts.gstatic.com"
+          href="https://gstatic.loli.net"
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;500;600;700&display=swap"
+          href="https://fonts.loli.net/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
