@@ -51,6 +51,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ fontFamily: "'Instrument Serif', serif" }}
       >
         {children}
         <Toaster />
