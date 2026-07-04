@@ -1,0 +1,22 @@
+# EdgeOne Pages _headers 文件
+# 控制静态资源缓存策略，最大化 CDN 命中率
+
+# 视频文件：长期缓存（1年），immutable 表示文件不会变，CDN 可放心缓存
+/videos/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 字体文件：长期缓存
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 图片资源：长期缓存
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML：不缓存，保证更新立即生效
+/*
+  Cache-Control: public, max-age=0, must-revalidate

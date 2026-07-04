@@ -5,19 +5,19 @@ import { Menu, X } from "lucide-react";
 
 const VIDEOS = [
   {
-    url: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4",
+    url: "/videos/golden-hour.mp4",
     label: "金色时刻",
   },
   {
-    url: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_092026_dd05b805-ea0f-40b2-8c52-332b88502592.mp4",
+    url: "/videos/still-water.mp4",
     label: "静水",
   },
   {
-    url: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081042_df7202bf-bd80-4b2b-bbc6-1f09ba2870e9.mp4",
+    url: "/videos/deep-woods.mp4",
     label: "深林",
   },
   {
-    url: "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_080959_4cac5234-3573-464e-a5b7-76b94b8a7d61.mp4",
+    url: "/videos/quiet-dawn.mp4",
     label: "静谧黎明",
   },
 ];
@@ -40,19 +40,55 @@ export default function Home() {
   const [activeVideo, setActiveVideo] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loadingVideo, setLoadingVideo] = useState(false);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const isDarkMode = activeVideo === 2;
 
   const handleVideoSwitch = useCallback(
     (index: number) => {
       if (index === activeVideo || isTransitioning) return;
-      setActiveVideo(index);
-      setIsTransitioning(true);
-      if (cooldownRef.current) clearTimeout(cooldownRef.current);
-      cooldownRef.current = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 1000);
+      const targetVideo = videoRefs.current[index];
+      // 如果目标视频已经缓冲好（readyState >= 3），直接切换
+      if (targetVideo && targetVideo.readyState >= 3) {
+        setActiveVideo(index);
+        setIsTransitioning(true);
+        if (cooldownRef.current) clearTimeout(cooldownRef.current);
+        cooldownRef.current = setTimeout(() => {
+          setIsTransitioning(false);
+        }, 1000);
+        return;
+      }
+      // 否则先触发加载，等就绪后再切换
+      setLoadingVideo(true);
+      if (targetVideo) {
+        targetVideo.load();
+        const onReady = () => {
+          targetVideo.removeEventListener("canplay", onReady);
+          setActiveVideo(index);
+          setIsTransitioning(true);
+          setLoadingVideo(false);
+          if (cooldownRef.current) clearTimeout(cooldownRef.current);
+          cooldownRef.current = setTimeout(() => {
+            setIsTransitioning(false);
+          }, 1000);
+        };
+        targetVideo.addEventListener("canplay", onReady);
+        // 超时兜底：8 秒还没加载好，也切换过去（让用户看到加载状态）
+        setTimeout(() => {
+          targetVideo.removeEventListener("canplay", onReady);
+          if (targetVideo.readyState < 3) {
+            setActiveVideo(index);
+            setIsTransitioning(true);
+            setLoadingVideo(false);
+            if (cooldownRef.current) clearTimeout(cooldownRef.current);
+            cooldownRef.current = setTimeout(() => {
+              setIsTransitioning(false);
+            }, 1000);
+          }
+        }, 8000);
+      }
     },
     [activeVideo, isTransitioning]
   );
@@ -66,11 +102,15 @@ export default function Home() {
         {VIDEOS.map((video, index) => (
           <video
             key={index}
+            ref={(el) => {
+              videoRefs.current[index] = el;
+            }}
             src={video.url}
             autoPlay
             muted
             loop
             playsInline
+            preload={index === 0 ? "auto" : "metadata"}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
               activeVideo === index ? "opacity-100" : "opacity-0"
             }`}
@@ -238,11 +278,13 @@ export default function Home() {
           <div className="flex items-center gap-3 sm:gap-5 flex-wrap justify-center">
             {VIDEOS.map((video, index) => {
               const isActive = activeVideo === index;
+              const isLoadingThis = loadingVideo && !isActive && isTransitioning;
               return (
                 <button
                   key={index}
                   onClick={() => handleVideoSwitch(index)}
-                  className={`px-2 py-1.5 text-sm border-b-2 transition-all duration-300 ${
+                  disabled={isTransitioning}
+                  className={`px-2 py-1.5 text-sm border-b-2 transition-all duration-300 flex items-center gap-1.5 disabled:cursor-not-allowed ${
                     isActive
                       ? "opacity-100"
                       : "opacity-50 hover:opacity-80 border-transparent"
@@ -254,6 +296,12 @@ export default function Home() {
                   }}
                 >
                   {video.label}
+                  {isLoadingThis && (
+                    <span
+                      className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
+                      style={{ backgroundColor: heroTextColor }}
+                    />
+                  )}
                 </button>
               );
             })}
