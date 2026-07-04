@@ -160,13 +160,6 @@ export default function Home() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/admin"
-              className="bg-white text-black text-sm px-5 py-1.5 rounded-full hover:bg-white/90 transition-colors duration-200 ml-1"
-              style={systemFont}
-            >
-              管理后台
-            </Link>
           </div>
 
           {/* Mobile Hamburger */}
@@ -214,18 +207,6 @@ export default function Home() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className="bg-white text-black text-lg px-8 py-3 rounded-full mt-4 hover:bg-white/90 transition-colors duration-200"
-                style={{
-                  ...systemFont,
-                  animation:
-                    "mobile-menu-button-in 500ms cubic-bezier(0.4,0,0.2,1) 300ms both",
-                }}
-              >
-                管理后台
-              </Link>
             </div>
           </div>
         )}

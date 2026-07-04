@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, LayoutDashboard } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { FONTS } from "@/lib/styles";
 
 const NAV_LINKS = [
@@ -38,14 +38,6 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/admin"
-            className="bg-white text-black text-sm px-4 py-1.5 rounded-full hover:bg-white/90 transition-colors duration-200 ml-1 inline-flex items-center gap-1.5"
-            style={FONTS.system}
-          >
-            <LayoutDashboard size={14} />
-            管理后台
-          </Link>
         </div>
 
         {/* Mobile */}
@@ -93,19 +85,6 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/admin"
-              onClick={() => setMobileOpen(false)}
-              className="bg-white text-black text-lg px-8 py-3 rounded-full mt-4 hover:bg-white/90 transition-colors duration-200 inline-flex items-center gap-2"
-              style={{
-                ...FONTS.system,
-                animation:
-                  "mobile-menu-button-in 500ms cubic-bezier(0.4,0,0.2,1) 300ms both",
-              }}
-            >
-              <LayoutDashboard size={18} />
-              管理后台
-            </Link>
           </div>
         </div>
       )}
