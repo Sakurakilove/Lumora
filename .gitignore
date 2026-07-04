@@ -52,3 +52,11 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Sandbox/dev scripts (not part of the app)
+/.zscripts/
+/download/
+/worklog.md
+/scripts/edgeone_*.json
+/scripts/edgeone_*.md
+/EDGEONE_DEPLOY.md
