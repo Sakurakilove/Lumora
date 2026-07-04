@@ -6,7 +6,7 @@ const COOKIE_NAME = "lumora_admin_token";
 const SESSION_SECRET =
   process.env.SESSION_SECRET || "lumora-skills-default-secret-change-in-prod";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // 仅保护 /admin 路径（但放行 /admin/login）
