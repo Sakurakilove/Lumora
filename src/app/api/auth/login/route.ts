@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { ensureDbInitialized } from "@/lib/db-init";
 import {
   signToken,
   setAdminCookie,
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    await ensureDbInitialized();
     const user = await db.adminUser.findUnique({ where: { username } });
     if (!user) {
       return NextResponse.json(

@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { ensureDbInitialized } from "./db-init";
 
 export type Skill = {
   id: string;
@@ -45,6 +46,7 @@ export async function listSkills(opts?: {
   featured?: boolean;
   limit?: number;
 }): Promise<Skill[]> {
+  await ensureDbInitialized();
   const where: any = { published: true };
   if (opts?.category && opts.category !== "all") {
     where.category = opts.category;
@@ -69,6 +71,7 @@ export async function listSkills(opts?: {
 }
 
 export async function listAllSkillsForAdmin(): Promise<Skill[]> {
+  await ensureDbInitialized();
   const skills = await db.skill.findMany({
     orderBy: [{ createdAt: "desc" }],
   });
@@ -76,18 +79,21 @@ export async function listAllSkillsForAdmin(): Promise<Skill[]> {
 }
 
 export async function getSkillBySlug(slug: string): Promise<Skill | null> {
+  await ensureDbInitialized();
   const s = await db.skill.findUnique({ where: { slug } });
   if (!s) return null;
   return serialize(s);
 }
 
 export async function getSkillById(id: string): Promise<Skill | null> {
+  await ensureDbInitialized();
   const s = await db.skill.findUnique({ where: { id } });
   if (!s) return null;
   return serialize(s);
 }
 
 export async function incrementView(id: string) {
+  await ensureDbInitialized();
   await db.skill.update({
     where: { id },
     data: { viewCount: { increment: 1 } },
@@ -95,6 +101,7 @@ export async function incrementView(id: string) {
 }
 
 export async function incrementDeploy(id: string) {
+  await ensureDbInitialized();
   await db.skill.update({
     where: { id },
     data: { deployCount: { increment: 1 } },
@@ -102,6 +109,7 @@ export async function incrementDeploy(id: string) {
 }
 
 export async function createSkill(data: Omit<Skill, "id" | "createdAt" | "updatedAt" | "viewCount" | "deployCount">) {
+  await ensureDbInitialized();
   const created = await db.skill.create({
     data: {
       name: data.name,
@@ -124,6 +132,7 @@ export async function createSkill(data: Omit<Skill, "id" | "createdAt" | "update
 }
 
 export async function updateSkill(id: string, data: Partial<Omit<Skill, "id" | "createdAt" | "updatedAt">>) {
+  await ensureDbInitialized();
   const updateData: any = { ...data };
   if (Array.isArray(data.tags)) {
     updateData.tags = data.tags.join(",");
@@ -136,10 +145,12 @@ export async function updateSkill(id: string, data: Partial<Omit<Skill, "id" | "
 }
 
 export async function deleteSkill(id: string) {
+  await ensureDbInitialized();
   await db.skill.delete({ where: { id } });
 }
 
 export async function getStats() {
+  await ensureDbInitialized();
   const [total, published, featured, totalViews, totalDeploys] = await Promise.all([
     db.skill.count(),
     db.skill.count({ where: { published: true } }),

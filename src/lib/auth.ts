@@ -1,5 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { hashPassword, verifyPassword } from "./password";
+
+export { hashPassword, verifyPassword };
 
 const COOKIE_NAME = "lumora_admin_token";
 const SESSION_SECRET =
@@ -57,24 +60,6 @@ export async function setAdminCookie(token: string) {
 export async function clearAdminCookie() {
   const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
-}
-
-// Simple password hashing using Web Crypto API
-export async function hashPassword(password: string): Promise<string> {
-  const salt = "lumora-static-salt";
-  const data = encoder.encode(salt + password);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-export async function verifyPassword(
-  password: string,
-  hashed: string
-): Promise<boolean> {
-  const computed = await hashPassword(password);
-  return computed === hashed;
 }
 
 export const ADMIN_COOKIE_NAME = COOKIE_NAME;
