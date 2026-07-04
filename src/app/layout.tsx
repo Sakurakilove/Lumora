@@ -14,18 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lumora — 在无尽喧嚣中寻得清明",
+  title: "Lumora Skills — 发现、安装、分享高质量 Skills",
   description:
-    "超越提示音、无尽刷屏与无休止需求的混乱。发现如何守护你的当下，带着意图去创造。",
-  keywords: ["Lumora", "正念", "专注", "冥想", "清明", "mindfulness", "focus"],
-  authors: [{ name: "Lumora" }],
+    "为 OpenClaw 与 Claude Code 而生的 Skills 注册目录。一行命令安装，即插即用，全部开源免费。",
+  keywords: ["Lumora Skills", "OpenClaw", "Claude Code", "Skills", "AI", "正念", "工具", "目录"],
+  authors: [{ name: "朝歌 @Sakurakilove" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "Lumora — 在无尽喧嚣中寻得清明",
-    description: "守护你的当下，带着意图去创造。",
-    siteName: "Lumora",
+    title: "Lumora Skills — 发现、安装、分享高质量 Skills",
+    description: "为 OpenClaw 与 Claude Code 而生的 Skills 注册目录",
+    siteName: "Lumora Skills",
     type: "website",
   },
 };

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Search, Sparkles, Eye, Rocket, ArrowLeft } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { FONTS } from "@/lib/styles";
 import { CATEGORIES } from "@/lib/skills";
 
@@ -46,8 +47,8 @@ export default function ExplorePage() {
   }, [fetchSkills]);
 
   return (
-    <div className="min-h-screen bg-black text-white relative">
-      <div className="absolute top-0 left-0 right-0 h-[60vh] overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-black text-white flex flex-col">
+      <div className="relative h-[60vh] overflow-hidden pointer-events-none absolute top-0 left-0 right-0 z-0">
         <video
           src="/videos/golden-hour.mp4"
           autoPlay
@@ -61,7 +62,7 @@ export default function ExplorePage() {
 
       <Navbar />
 
-      <main className="relative z-10 pt-32 pb-24 px-6 sm:px-10 max-w-7xl mx-auto">
+      <main className="relative z-10 pt-32 pb-24 px-6 sm:px-10 max-w-7xl mx-auto flex-1">
         <div className="text-center mb-16">
           <div
             className="liquid-glass rounded-full px-5 py-2 mb-6 inline-block"
@@ -82,9 +83,9 @@ export default function ExplorePage() {
             className="max-w-xl mx-auto text-white/70 text-base sm:text-lg leading-relaxed"
             style={FONTS.system}
           >
-            每一个 Skill 都可直接部署到 EdgeOne Pages。
+            每一个 Skill 都可通过一行命令安装到你的本地环境。
             <br className="hidden sm:block" />
-            点击部署，几秒钟内拥有你自己的实例。
+            浏览、搜索、复制命令，几秒内开始使用。
           </p>
         </div>
 
@@ -159,6 +160,8 @@ export default function ExplorePage() {
           </Link>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

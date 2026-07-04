@@ -17,7 +17,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 sm:px-10 py-6">
+      <nav className="relative z-30 flex items-center justify-between px-6 sm:px-10 py-6">
         <Link
           href="/"
           className="text-white text-xl sm:text-2xl italic"

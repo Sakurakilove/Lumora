@@ -18,6 +18,7 @@ import {
   Tag,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { FONTS } from "@/lib/styles";
 import { CATEGORIES } from "@/lib/skills";
 
@@ -135,7 +136,7 @@ export default function SkillDetailPage({
   });
 
   return (
-    <div className="min-h-screen bg-black text-white relative">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       {/* 顶部背景视频氛围 */}
       <div className="absolute top-0 left-0 right-0 h-[50vh] overflow-hidden pointer-events-none">
         <video
@@ -151,7 +152,7 @@ export default function SkillDetailPage({
 
       <Navbar />
 
-      <main className="relative z-10 pt-32 pb-24 px-6 sm:px-10 max-w-5xl mx-auto">
+      <main className="relative z-10 pt-32 pb-24 px-6 sm:px-10 max-w-5xl mx-auto flex-1 w-full">
         {/* 面包屑 */}
         <div
           className="flex items-center gap-2 text-xs text-white/40 mb-6"
@@ -476,6 +477,8 @@ export default function SkillDetailPage({
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
