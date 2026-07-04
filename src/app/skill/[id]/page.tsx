@@ -41,8 +41,6 @@ type Skill = {
   createdAt: string;
 };
 
-type InstallTab = "cli" | "prompt";
-
 export default function SkillDetailPage({
   params,
 }: {
@@ -52,8 +50,7 @@ export default function SkillDetailPage({
   const [skill, setSkill] = useState<Skill | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [installTab, setInstallTab] = useState<InstallTab>("cli");
-  const [copied, setCopied] = useState<InstallTab | null>(null);
+  const [copiedStep, setCopiedStep] = useState<number | null>(null);
 
   useEffect(() => {
     fetch(`/api/skills/${id}`)
@@ -104,22 +101,33 @@ export default function SkillDetailPage({
   const categoryName =
     CATEGORIES.find((c) => c.id === skill.category)?.name || skill.category;
 
-  // OpenClaw 安装命令：@<author-lower>/<slug>
-  const authorHandle = "@" + skill.author.toLowerCase().replace(/\s+/g, "");
-  const installCommand = `openclaw skills install ${authorHandle}/${skill.slug}`;
-  const promptText = `使用 ${skill.name} skill 来帮我完成任务。通过 openclaw 调用 ${authorHandle}/${skill.slug}。`;
+  // GitHub 仓库信息
+  const repoUrl = skill.githubUrl.replace(/\.git$/, "");
+  const repoPath = repoUrl.replace("https://github.com/", "");
+  // 安装命令（两步）
+  const commands = [
+    {
+      label: "克隆仓库到 skills 目录",
+      cmd: `git clone ${repoUrl}.git skills/${skill.slug}`,
+    },
+    {
+      label: "安装依赖",
+      cmd: `cd skills/${skill.slug} && npm install`,
+    },
+  ];
 
-  const handleCopy = async (tab: InstallTab, text: string) => {
+  const handleCopy = async (stepIndex: number, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(tab);
-      // 记录一次安装计数
-      fetch(`/api/skills/${skill.id}/deploy`, { method: "POST" }).catch(() => {});
-      setTimeout(() => setCopied(null), 2000);
+      setCopiedStep(stepIndex);
+      // 仅在第一次复制（git clone）时记录安装计数
+      if (stepIndex === 0) {
+        fetch(`/api/skills/${skill.id}/deploy`, { method: "POST" }).catch(() => {});
+      }
+      setTimeout(() => setCopiedStep(null), 2000);
     } catch {}
   };
 
-  // 格式化日期
   const createdDate = new Date(skill.createdAt).toLocaleDateString("zh-CN", {
     year: "numeric",
     month: "long",
@@ -145,12 +153,15 @@ export default function SkillDetailPage({
 
       <main className="relative z-10 pt-32 pb-24 px-6 sm:px-10 max-w-5xl mx-auto">
         {/* 面包屑 */}
-        <div className="flex items-center gap-2 text-xs text-white/40 mb-6" style={FONTS.system}>
+        <div
+          className="flex items-center gap-2 text-xs text-white/40 mb-6"
+          style={FONTS.system}
+        >
           <Link href="/explore" className="hover:text-white/70 transition-colors">
             Skills
           </Link>
           <span>/</span>
-          <span className="text-white/60">{authorHandle.slice(1)}</span>
+          <span className="text-white/60">{skill.author}</span>
           <span>/</span>
           <span className="text-white">{skill.slug}</span>
         </div>
@@ -165,7 +176,7 @@ export default function SkillDetailPage({
         </Link>
 
         <div className="grid md:grid-cols-2 gap-10 items-start">
-          {/* 左侧：缩略图 + 标签 */}
+          {/* 左侧：缩略图 + 标签 + 元信息 */}
           <div>
             <div className="liquid-glass rounded-2xl overflow-hidden aspect-[4/3] relative">
               {skill.thumbnail ? (
@@ -234,10 +245,25 @@ export default function SkillDetailPage({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-white/50 inline-flex items-center gap-2">
-                  <Tag size={14} />
+                  <Box size={14} />
                   使用场景
                 </span>
                 <span className="text-white">{skill.deployPlatform}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/50 inline-flex items-center gap-2">
+                  <Github size={14} />
+                  仓库
+                </span>
+                <a
+                  href={repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-white/70 truncate max-w-[200px]"
+                  title={repoPath}
+                >
+                  {repoPath}
+                </a>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-white/50 inline-flex items-center gap-2">
@@ -287,7 +313,7 @@ export default function SkillDetailPage({
               </div>
             </div>
 
-            {/* Install 区（仿 ClawHub） */}
+            {/* Install 区 - 直接 GitHub 安装 */}
             <div className="mb-6">
               <div
                 className="text-xs text-white/50 mb-3 uppercase tracking-wider"
@@ -296,80 +322,59 @@ export default function SkillDetailPage({
                 Install
               </div>
 
-              {/* Tab 切换 */}
-              <div className="flex gap-1 mb-3">
-                <button
-                  onClick={() => setInstallTab("cli")}
-                  className={`px-4 py-1.5 rounded-full text-xs transition-all ${
-                    installTab === "cli"
-                      ? "bg-white text-black"
-                      : "liquid-glass text-white/70 hover:text-white"
-                  }`}
-                  style={FONTS.system}
-                >
-                  <Terminal size={12} className="inline mr-1.5" />
-                  CLI
-                </button>
-                <button
-                  onClick={() => setInstallTab("prompt")}
-                  className={`px-4 py-1.5 rounded-full text-xs transition-all ${
-                    installTab === "prompt"
-                      ? "bg-white text-black"
-                      : "liquid-glass text-white/70 hover:text-white"
-                  }`}
-                  style={FONTS.system}
-                >
-                  <Terminal size={12} className="inline mr-1.5" />
-                  Prompt
-                </button>
-              </div>
-
-              {/* 命令复制框 */}
-              <div
-                className="liquid-glass rounded-2xl p-2 flex items-center gap-2"
-                style={{ backgroundColor: "rgba(10,10,10,0.6)" }}
-              >
-                <div
-                  className="flex items-center gap-2 flex-1 px-4 py-3 min-w-0"
-                  style={FONTS.system}
-                >
-                  <span className="text-white/40 select-none shrink-0">$</span>
-                  <code className="text-white text-sm font-mono break-all">
-                    {installTab === "cli" ? installCommand : promptText}
-                  </code>
-                </div>
-                <button
-                  onClick={() =>
-                    handleCopy(
-                      installTab,
-                      installTab === "cli" ? installCommand : promptText
-                    )
-                  }
-                  className="bg-white text-black text-sm px-4 py-2.5 rounded-xl hover:bg-white/90 transition-colors inline-flex items-center gap-2 shrink-0 m-1"
-                  style={FONTS.system}
-                  aria-label="复制"
-                >
-                  {copied === installTab ? (
-                    <>
-                      <Check size={14} />
-                      已复制
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} />
-                      复制
-                    </>
-                  )}
-                </button>
+              <div className="space-y-3">
+                {commands.map((c, i) => (
+                  <div key={i}>
+                    <div
+                      className="text-xs text-white/60 mb-1.5 inline-flex items-center gap-1.5"
+                      style={FONTS.system}
+                    >
+                      <span className="w-5 h-5 rounded-full bg-white/10 inline-flex items-center justify-center text-[10px] text-white">
+                        {i + 1}
+                      </span>
+                      {c.label}
+                    </div>
+                    <div
+                      className="liquid-glass rounded-xl p-2 flex items-center gap-2"
+                      style={{ backgroundColor: "rgba(10,10,10,0.6)" }}
+                    >
+                      <div
+                        className="flex items-center gap-2 flex-1 px-3 py-2 min-w-0"
+                        style={FONTS.system}
+                      >
+                        <span className="text-white/40 select-none shrink-0">$</span>
+                        <code className="text-white text-xs font-mono break-all">
+                          {c.cmd}
+                        </code>
+                      </div>
+                      <button
+                        onClick={() => handleCopy(i, c.cmd)}
+                        className="bg-white text-black text-xs px-3 py-2 rounded-lg hover:bg-white/90 transition-colors inline-flex items-center gap-1.5 shrink-0 m-1"
+                        style={FONTS.system}
+                        aria-label={`复制步骤 ${i + 1}`}
+                      >
+                        {copiedStep === i ? (
+                          <>
+                            <Check size={12} />
+                            已复制
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            复制
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <p
-                className="text-xs text-white/40 mt-2 leading-relaxed"
+                className="text-xs text-white/40 mt-3 leading-relaxed"
                 style={FONTS.system}
               >
-                {installTab === "cli"
-                  ? "在终端执行此命令，skill 会自动安装到你的 OpenClaw 环境"
-                  : "将此提示词粘贴到 OpenClaw 对话中，AI 会自动调用此 skill"}
+                在你的项目根目录依次执行上述命令，skill 会安装到 <code className="text-white/60">skills/{skill.slug}</code> 目录，安装完成后即可在对话中调用。
               </p>
             </div>
 
@@ -403,7 +408,10 @@ export default function SkillDetailPage({
 
         {/* 详细描述（SKILL.md 风格） */}
         <div className="mt-16 max-w-3xl">
-          <h2 className="text-3xl mb-6 text-white inline-flex items-center gap-3" style={FONTS.serif}>
+          <h2
+            className="text-3xl mb-6 text-white inline-flex items-center gap-3"
+            style={FONTS.serif}
+          >
             <FileText size={24} />
             SKILL.md
           </h2>
@@ -430,10 +438,10 @@ export default function SkillDetailPage({
               <div className="flex-1">
                 <h3 className="text-white text-base mb-1 inline-flex items-center gap-2">
                   <Terminal size={15} />
-                  安装 skill
+                  克隆并安装
                 </h3>
                 <p className="text-white/60 text-sm leading-relaxed">
-                  复制上方 CLI 命令，在终端中执行。skill 会自动下载并注册到 OpenClaw 环境。
+                  在项目根目录执行上方 Install 区的两条命令，skill 会自动安装到 <code className="text-white/80">skills/{skill.slug}</code> 目录。
                 </p>
               </div>
             </div>
@@ -444,10 +452,10 @@ export default function SkillDetailPage({
               <div className="flex-1">
                 <h3 className="text-white text-base mb-1 inline-flex items-center gap-2">
                   <Box size={15} />
-                  在对话中调用
+                  自动注册
                 </h3>
                 <p className="text-white/60 text-sm leading-relaxed">
-                  安装完成后，在 OpenClaw 对话中直接描述你的需求，AI 会自动识别并调用此 skill。
+                  安装完成后，OpenClaw / Claude Code 等支持 Skills 协议的客户端会自动扫描 <code className="text-white/80">skills/</code> 目录并注册此 skill，无需额外配置。
                 </p>
               </div>
             </div>
@@ -461,7 +469,7 @@ export default function SkillDetailPage({
                   按需定制
                 </h3>
                 <p className="text-white/60 text-sm leading-relaxed">
-                  源码完全开放，可克隆仓库后基于自身需求二次开发，再推送到自己的命名空间发布。
+                  源码完全开放，进入 <code className="text-white/80">skills/{skill.slug}</code> 目录修改 <code className="text-white/80">SKILL.md</code> 与实现文件，即可基于自身需求二次开发。
                 </p>
               </div>
             </div>
