@@ -14,6 +14,8 @@ import {
   Terminal,
   Box,
   Wrench,
+  FileText,
+  Tag,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { FONTS } from "@/lib/styles";
@@ -39,6 +41,8 @@ type Skill = {
   createdAt: string;
 };
 
+type InstallTab = "cli" | "prompt";
+
 export default function SkillDetailPage({
   params,
 }: {
@@ -48,6 +52,8 @@ export default function SkillDetailPage({
   const [skill, setSkill] = useState<Skill | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [installTab, setInstallTab] = useState<InstallTab>("cli");
+  const [copied, setCopied] = useState<InstallTab | null>(null);
 
   useEffect(() => {
     fetch(`/api/skills/${id}`)
@@ -98,11 +104,27 @@ export default function SkillDetailPage({
   const categoryName =
     CATEGORIES.find((c) => c.id === skill.category)?.name || skill.category;
 
-  // OpenClaw 引用命令（基于 GitHub 仓库地址）
-  const repoPath = skill.githubUrl
-    .replace("https://github.com/", "")
-    .replace(/\.git$/, "");
-  const clawCommand = `claw install ${repoPath}`;
+  // OpenClaw 安装命令：@<author-lower>/<slug>
+  const authorHandle = "@" + skill.author.toLowerCase().replace(/\s+/g, "");
+  const installCommand = `openclaw skills install ${authorHandle}/${skill.slug}`;
+  const promptText = `使用 ${skill.name} skill 来帮我完成任务。通过 openclaw 调用 ${authorHandle}/${skill.slug}。`;
+
+  const handleCopy = async (tab: InstallTab, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(tab);
+      // 记录一次安装计数
+      fetch(`/api/skills/${skill.id}/deploy`, { method: "POST" }).catch(() => {});
+      setTimeout(() => setCopied(null), 2000);
+    } catch {}
+  };
+
+  // 格式化日期
+  const createdDate = new Date(skill.createdAt).toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <div className="min-h-screen bg-black text-white relative">
@@ -122,6 +144,17 @@ export default function SkillDetailPage({
       <Navbar />
 
       <main className="relative z-10 pt-32 pb-24 px-6 sm:px-10 max-w-5xl mx-auto">
+        {/* 面包屑 */}
+        <div className="flex items-center gap-2 text-xs text-white/40 mb-6" style={FONTS.system}>
+          <Link href="/explore" className="hover:text-white/70 transition-colors">
+            Skills
+          </Link>
+          <span>/</span>
+          <span className="text-white/60">{authorHandle.slice(1)}</span>
+          <span>/</span>
+          <span className="text-white">{skill.slug}</span>
+        </div>
+
         <Link
           href="/explore"
           className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm mb-8 transition-colors"
@@ -161,11 +194,13 @@ export default function SkillDetailPage({
               )}
             </div>
 
+            {/* 标签云 */}
             <div className="flex flex-wrap gap-2 mt-4">
               <span
-                className="liquid-glass rounded-full px-3 py-1 text-xs text-white/80"
+                className="liquid-glass rounded-full px-3 py-1 text-xs text-white/80 inline-flex items-center gap-1"
                 style={FONTS.system}
               >
+                <Tag size={11} />
                 {categoryName}
               </span>
               <span
@@ -180,13 +215,41 @@ export default function SkillDetailPage({
                   className="liquid-glass rounded-full px-3 py-1 text-xs text-white/80"
                   style={FONTS.system}
                 >
-                  {tag}
+                  #{tag}
                 </span>
               ))}
             </div>
+
+            {/* 元信息 */}
+            <div
+              className="mt-6 liquid-glass rounded-2xl p-5 space-y-3 text-sm"
+              style={FONTS.system}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-white/50 inline-flex items-center gap-2">
+                  <FileText size={14} />
+                  作者
+                </span>
+                <span className="text-white">{skill.author}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/50 inline-flex items-center gap-2">
+                  <Tag size={14} />
+                  使用场景
+                </span>
+                <span className="text-white">{skill.deployPlatform}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/50 inline-flex items-center gap-2">
+                  <Sparkles size={14} />
+                  发布时间
+                </span>
+                <span className="text-white">{createdDate}</span>
+              </div>
+            </div>
           </div>
 
-          {/* 右侧：标题 + 描述 + 操作按钮 */}
+          {/* 右侧：标题 + 描述 + Install 区 */}
           <div>
             <h1
               className="text-4xl sm:text-5xl md:text-6xl leading-[1.1] mb-4"
@@ -222,32 +285,112 @@ export default function SkillDetailPage({
                   <Rocket size={11} /> 安装
                 </div>
               </div>
-              <div>
-                <div className="text-2xl text-white" style={FONTS.serif}>
-                  {skill.author}
-                </div>
-                <div className="text-xs text-white/50 mt-1">作者</div>
-              </div>
             </div>
 
-            {/* 操作按钮：仅保留源码与演示 */}
-            <div className="flex flex-col gap-3">
+            {/* Install 区（仿 ClawHub） */}
+            <div className="mb-6">
+              <div
+                className="text-xs text-white/50 mb-3 uppercase tracking-wider"
+                style={FONTS.system}
+              >
+                Install
+              </div>
+
+              {/* Tab 切换 */}
+              <div className="flex gap-1 mb-3">
+                <button
+                  onClick={() => setInstallTab("cli")}
+                  className={`px-4 py-1.5 rounded-full text-xs transition-all ${
+                    installTab === "cli"
+                      ? "bg-white text-black"
+                      : "liquid-glass text-white/70 hover:text-white"
+                  }`}
+                  style={FONTS.system}
+                >
+                  <Terminal size={12} className="inline mr-1.5" />
+                  CLI
+                </button>
+                <button
+                  onClick={() => setInstallTab("prompt")}
+                  className={`px-4 py-1.5 rounded-full text-xs transition-all ${
+                    installTab === "prompt"
+                      ? "bg-white text-black"
+                      : "liquid-glass text-white/70 hover:text-white"
+                  }`}
+                  style={FONTS.system}
+                >
+                  <Terminal size={12} className="inline mr-1.5" />
+                  Prompt
+                </button>
+              </div>
+
+              {/* 命令复制框 */}
+              <div
+                className="liquid-glass rounded-2xl p-2 flex items-center gap-2"
+                style={{ backgroundColor: "rgba(10,10,10,0.6)" }}
+              >
+                <div
+                  className="flex items-center gap-2 flex-1 px-4 py-3 min-w-0"
+                  style={FONTS.system}
+                >
+                  <span className="text-white/40 select-none shrink-0">$</span>
+                  <code className="text-white text-sm font-mono break-all">
+                    {installTab === "cli" ? installCommand : promptText}
+                  </code>
+                </div>
+                <button
+                  onClick={() =>
+                    handleCopy(
+                      installTab,
+                      installTab === "cli" ? installCommand : promptText
+                    )
+                  }
+                  className="bg-white text-black text-sm px-4 py-2.5 rounded-xl hover:bg-white/90 transition-colors inline-flex items-center gap-2 shrink-0 m-1"
+                  style={FONTS.system}
+                  aria-label="复制"
+                >
+                  {copied === installTab ? (
+                    <>
+                      <Check size={14} />
+                      已复制
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} />
+                      复制
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <p
+                className="text-xs text-white/40 mt-2 leading-relaxed"
+                style={FONTS.system}
+              >
+                {installTab === "cli"
+                  ? "在终端执行此命令，skill 会自动安装到你的 OpenClaw 环境"
+                  : "将此提示词粘贴到 OpenClaw 对话中，AI 会自动调用此 skill"}
+              </p>
+            </div>
+
+            {/* 源码与演示按钮 */}
+            <div className="flex gap-3">
               <a
                 href={skill.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white text-black text-base px-6 py-3.5 rounded-full hover:bg-white/90 transition-colors duration-200 inline-flex items-center justify-center gap-2 font-medium"
+                className="flex-1 liquid-glass rounded-full text-white text-sm px-5 py-3 hover:bg-white/10 transition-colors inline-flex items-center justify-center gap-2"
                 style={FONTS.system}
               >
-                <Github size={18} />
-                查看源代码
+                <Github size={16} />
+                源代码
               </a>
               {skill.demoUrl && (
                 <a
                   href={skill.demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="liquid-glass rounded-full text-white text-sm px-5 py-3 hover:bg-white/10 transition-colors inline-flex items-center justify-center gap-2"
+                  className="flex-1 liquid-glass rounded-full text-white text-sm px-5 py-3 hover:bg-white/10 transition-colors inline-flex items-center justify-center gap-2"
                   style={FONTS.system}
                 >
                   <ExternalLink size={16} />
@@ -258,128 +401,73 @@ export default function SkillDetailPage({
           </div>
         </div>
 
-        {/* 详细描述 */}
+        {/* 详细描述（SKILL.md 风格） */}
         <div className="mt-16 max-w-3xl">
-          <h2 className="text-3xl mb-6 text-white" style={FONTS.serif}>
-            关于这个 Skill
+          <h2 className="text-3xl mb-6 text-white inline-flex items-center gap-3" style={FONTS.serif}>
+            <FileText size={24} />
+            SKILL.md
           </h2>
-          <p
-            className="text-white/80 text-base leading-relaxed whitespace-pre-line"
+          <div
+            className="liquid-glass rounded-2xl p-6 sm:p-8"
             style={FONTS.system}
           >
-            {skill.description}
-          </p>
+            <p className="text-white/80 text-base leading-relaxed whitespace-pre-line">
+              {skill.description}
+            </p>
+          </div>
         </div>
 
-        {/* 在 OpenClaw 中使用 */}
+        {/* 使用步骤 */}
         <div className="mt-16 max-w-3xl">
           <h2 className="text-3xl mb-6 text-white" style={FONTS.serif}>
-            在 OpenClaw 中使用
+            如何使用
           </h2>
-          <p
-            className="text-white/70 text-sm leading-relaxed mb-6"
-            style={FONTS.system}
-          >
-            复制下方命令，在 OpenClaw 终端中执行即可安装此 Skill 到你的环境。
-          </p>
-
-          {/* 命令复制框 */}
-          <ClawCommandBox command={clawCommand} skillId={skill.id} />
-
-          {/* 使用步骤 */}
-          <div className="grid sm:grid-cols-3 gap-4 mt-8">
-            <div className="liquid-glass rounded-2xl p-5">
-              <Terminal size={20} className="text-white mb-3" />
-              <h3 className="text-white text-base mb-1" style={FONTS.system}>
-                一键安装
-              </h3>
-              <p
-                className="text-white/60 text-sm leading-relaxed"
-                style={FONTS.system}
-              >
-                通过 claw 命令直接从 GitHub 仓库拉取，无需手动下载
-              </p>
+          <div className="space-y-4" style={FONTS.system}>
+            <div className="liquid-glass rounded-2xl p-5 flex gap-4">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-sm shrink-0">
+                1
+              </div>
+              <div className="flex-1">
+                <h3 className="text-white text-base mb-1 inline-flex items-center gap-2">
+                  <Terminal size={15} />
+                  安装 skill
+                </h3>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  复制上方 CLI 命令，在终端中执行。skill 会自动下载并注册到 OpenClaw 环境。
+                </p>
+              </div>
             </div>
-            <div className="liquid-glass rounded-2xl p-5">
-              <Box size={20} className="text-white mb-3" />
-              <h3 className="text-white text-base mb-1" style={FONTS.system}>
-                即插即用
-              </h3>
-              <p
-                className="text-white/60 text-sm leading-relaxed"
-                style={FONTS.system}
-              >
-                安装后自动注册到 OpenClaw Skills 列表，立即可在对话中调用
-              </p>
+            <div className="liquid-glass rounded-2xl p-5 flex gap-4">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-sm shrink-0">
+                2
+              </div>
+              <div className="flex-1">
+                <h3 className="text-white text-base mb-1 inline-flex items-center gap-2">
+                  <Box size={15} />
+                  在对话中调用
+                </h3>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  安装完成后，在 OpenClaw 对话中直接描述你的需求，AI 会自动识别并调用此 skill。
+                </p>
+              </div>
             </div>
-            <div className="liquid-glass rounded-2xl p-5">
-              <Wrench size={20} className="text-white mb-3" />
-              <h3 className="text-white text-base mb-1" style={FONTS.system}>
-                可定制
-              </h3>
-              <p
-                className="text-white/60 text-sm leading-relaxed"
-                style={FONTS.system}
-              >
-                源码完全开放，可基于自身需求二次开发与扩展
-              </p>
+            <div className="liquid-glass rounded-2xl p-5 flex gap-4">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-sm shrink-0">
+                3
+              </div>
+              <div className="flex-1">
+                <h3 className="text-white text-base mb-1 inline-flex items-center gap-2">
+                  <Wrench size={15} />
+                  按需定制
+                </h3>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  源码完全开放，可克隆仓库后基于自身需求二次开发，再推送到自己的命名空间发布。
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </main>
-    </div>
-  );
-}
-
-function ClawCommandBox({
-  command,
-  skillId,
-}: {
-  command: string;
-  skillId: string;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(command);
-      setCopied(true);
-      // 记录一次"安装"计数
-      fetch(`/api/skills/${skillId}/deploy`, { method: "POST" }).catch(() => {});
-      setTimeout(() => setCopied(false), 2000);
-    } catch {}
-  };
-
-  return (
-    <div
-      className="liquid-glass rounded-2xl p-2 flex items-center gap-2"
-      style={{ backgroundColor: "rgba(10,10,10,0.6)" }}
-    >
-      <div
-        className="flex items-center gap-2 flex-1 px-4 py-3"
-        style={FONTS.system}
-      >
-        <span className="text-white/40 select-none">$</span>
-        <code className="text-white text-sm font-mono break-all">{command}</code>
-      </div>
-      <button
-        onClick={handleCopy}
-        className="bg-white text-black text-sm px-4 py-2.5 rounded-xl hover:bg-white/90 transition-colors inline-flex items-center gap-2 shrink-0 m-1"
-        style={FONTS.system}
-        aria-label="复制命令"
-      >
-        {copied ? (
-          <>
-            <Check size={14} />
-            已复制
-          </>
-        ) : (
-          <>
-            <Copy size={14} />
-            复制
-          </>
-        )}
-      </button>
     </div>
   );
 }
