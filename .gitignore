@@ -60,3 +60,7 @@ server.log
 /scripts/edgeone_*.json
 /scripts/edgeone_*.md
 /EDGEONE_DEPLOY.md
+
+# SQLite database (regenerated on deploy via seed)
+/db/*.db
+/db/*.db-journal

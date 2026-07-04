@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 
 const VIDEOS = [
   {
@@ -22,7 +23,12 @@ const VIDEOS = [
   },
 ];
 
-const NAV_LINKS = ["运作方式", "功能特色", "价格方案", "社区"];
+const NAV_LINKS = [
+  { href: "/explore", label: "探索 Skills" },
+  { href: "/#about", label: "功能特色" },
+  { href: "/#pricing", label: "价格方案" },
+  { href: "/#community", label: "社区" },
+];
 
 const STATS = ["60+ 深度冥想", "12,000+ 创作者", "4.8 用户满意度", "意图优先设计"];
 
@@ -145,21 +151,22 @@ export default function Home() {
           {/* Desktop Nav Pill */}
           <div className="hidden md:flex items-center gap-1 liquid-glass rounded-full pl-2 pr-2 py-2">
             {NAV_LINKS.map((link) => (
-              <a
-                key={link}
-                href="#"
+              <Link
+                key={link.href}
+                href={link.href}
                 className="text-white/90 hover:text-white text-sm px-4 py-1.5 transition-colors duration-200"
                 style={systemFont}
               >
-                {link}
-              </a>
+                {link.label}
+              </Link>
             ))}
-            <button
+            <Link
+              href="/admin"
               className="bg-white text-black text-sm px-5 py-1.5 rounded-full hover:bg-white/90 transition-colors duration-200 ml-1"
               style={systemFont}
             >
-              立即开始
-            </button>
+              管理后台
+            </Link>
           </div>
 
           {/* Mobile Hamburger */}
@@ -192,9 +199,9 @@ export default function Home() {
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center">
             <div className="flex flex-col items-center gap-7">
               {NAV_LINKS.map((link, index) => (
-                <a
-                  key={link}
-                  href="#"
+                <Link
+                  key={link.href}
+                  href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-white text-3xl"
                   style={{
@@ -204,20 +211,21 @@ export default function Home() {
                     }ms both`,
                   }}
                 >
-                  {link}
-                </a>
+                  {link.label}
+                </Link>
               ))}
-              <button
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
                 className="bg-white text-black text-lg px-8 py-3 rounded-full mt-4 hover:bg-white/90 transition-colors duration-200"
                 style={{
                   ...systemFont,
                   animation:
                     "mobile-menu-button-in 500ms cubic-bezier(0.4,0,0.2,1) 300ms both",
                 }}
-                onClick={() => setMobileMenuOpen(false)}
               >
-                立即开始
-              </button>
+                管理后台
+              </Link>
             </div>
           </div>
         )}
@@ -266,12 +274,13 @@ export default function Home() {
               }`}
               style={{ ...systemFont, color: heroTextColor }}
             />
-            <button
+            <Link
+              href="/explore"
               className="bg-white text-black text-sm px-4 sm:px-5 py-2 rounded-full whitespace-nowrap hover:bg-white/90 transition-colors duration-200"
               style={systemFont}
             >
-              抢先体验
-            </button>
+              探索 Skills
+            </Link>
           </div>
 
           {/* Video Switcher */}
